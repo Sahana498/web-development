@@ -1,62 +1,35 @@
-// script.js
+document.getElementById('getWeatherBtn').addEventListener('click', function() {
+    const location = document.getElementById('locationInput').value;
+    fetchWeatherData(location);
+});
 
-// Game state variables
-let currentPlayer = 'X';
-let gameBoard = ['', '', '', '', '', '', '', '', ''];
-let gameActive = true;
+function fetchWeatherData(location) {
+    const apiKey = '0e76b557f1fce022b3620217b90f527b'; // Replace with your OpenWeatherMap API key
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`;
 
-// Function to create the game board
-function createBoard() {
-    const board = document.getElementById('game-board');
-    board.innerHTML = '';
-    gameBoard.forEach((cell, index) => {
-        const cellElement = document.createElement('div');
-        cellElement.classList.add('cell');
-        cellElement.textContent = cell;
-        cellElement.addEventListener('click', () => makeMove(index));
-        board.appendChild(cellElement);
-    });
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            displayWeatherData(data);
+        })
+        .catch(error => {
+            console.error('Error fetching weather data:', error);
+        });
 }
 
-// Function to make a move
-function makeMove(index) {
-    if (gameBoard[index] === '' && gameActive) {
-        gameBoard[index] = currentPlayer;
-        if (checkWinner()) {
-            document.getElementById('winner').textContent = `Player ${currentPlayer} wins!`;
-            gameActive = false;
-        } else if (gameBoard.every(cell => cell !== '')) {
-            document.getElementById('winner').textContent = 'It\'s a tie!';
-            gameActive = false;
-        } else {
-            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-        }
-        createBoard();
+function displayWeatherData(data) {
+    if (data.cod === '404') {
+        alert('Location not found');
+        return;
     }
+
+    const city = data.name;
+    const description = data.weather[0].description;
+    const temperature = data.main.temp;
+    const humidity = data.main.humidity;
+
+    document.getElementById('city').textContent = `Weather in ${city}`;
+    document.getElementById('description').textContent = `Condition: ${description}`;
+    document.getElementById('temperature').textContent = `Temperature: ${temperature}°C`;
+    document.getElementById('humidity').textContent = `Humidity: ${humidity}%`;
 }
-
-// Function to check for a winner
-function checkWinner() {
-    const winCombinations = [
-        [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-        [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-        [0, 4, 8], [2, 4, 6]             // Diagonals
-    ];
-
-    return winCombinations.some(combination => {
-        const [a, b, c] = combination;
-        return gameBoard[a] !== '' && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c];
-    });
-}
-
-// Function to reset the game
-function resetGame() {
-    currentPlayer = 'X';
-    gameBoard = ['', '', '', '', '', '', '', '', ''];
-    gameActive = true;
-    document.getElementById('winner').textContent = '';
-    createBoard();
-}
-
-// Initialize the board
-createBoard();
